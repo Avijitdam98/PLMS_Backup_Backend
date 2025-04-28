@@ -4,5 +4,6 @@ public enum ApplicationStatus {
     PENDING,
     APPROVED,
     REJECTED,
-    DISBURSED
-} 
+    DISBURSED,
+    CLOSED   // ✅ Added this
+}

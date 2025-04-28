@@ -1,27 +1,21 @@
+
+
 package com.professionalloan.management.model;
 
+import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "repayments")
 public class Repayment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "application_id")
+    @JoinColumn(name = "application_id", nullable = false)
     private LoanApplication loanApplication;
 
     @Column(nullable = false)
@@ -30,15 +24,17 @@ public class Repayment {
     @Column(nullable = false)
     private LocalDate dueDate;
 
-    @Column(nullable = true)
+    @Column
     private LocalDate paidDate;
 
     @Column(nullable = false)
     private String status; // PENDING, PAID, OVERDUE
 
-    private Integer emiNumber; // Which EMI number is this (1st, 2nd, etc.)
+    @Column
+    private Integer emiNumber; // 1st, 2nd, etc.
 
-    // Getters and Setters
+    // --- Getters and Setters ---
+
     public Long getId() {
         return id;
     }
@@ -95,3 +91,6 @@ public class Repayment {
         this.emiNumber = emiNumber;
     }
 }
+
+
+

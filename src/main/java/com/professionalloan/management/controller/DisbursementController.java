@@ -34,15 +34,12 @@ public class DisbursementController {
             @RequestParam BigDecimal amount) {
         try {
             Disbursement disbursement = disbursementService.disburseLoan(applicationId, amount);
-            // Optionally: Fetch the generated EMI schedule for this loan
-            List<Repayment> emis = repaymentService.getLoanEMIs(applicationId);
-
-            // Return both disbursement and EMI schedule
-            return ResponseEntity.ok(new DisbursementWithEmisResponse(disbursement, emis));
+            return ResponseEntity.ok(disbursement);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body("Disbursement failed: " + e.getMessage());
         }
     }
+    
 
     // Helper DTO for response
     public static class DisbursementWithEmisResponse {

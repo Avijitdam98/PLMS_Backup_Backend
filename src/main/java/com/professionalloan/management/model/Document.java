@@ -13,7 +13,6 @@ public class Document {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long documentId;
 
-    // User association (Many documents can belong to one user)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnore
@@ -39,6 +38,24 @@ public class Document {
 
     @Column(nullable = false)
     private boolean isVerified = false;
+
+    // ✅ ADD THIS DEFAULT CONSTRUCTOR
+    public Document() {
+        // Default no-argument constructor required by JPA
+    }
+
+    // Optional: parameterized constructor for convenience
+    public Document(User user, String fileName, String fileType, String filePath,
+                    LocalDateTime uploadDate, Long fileSize, String mimeType) {
+        this.user = user;
+        this.fileName = fileName;
+        this.fileType = fileType;
+        this.filePath = filePath;
+        this.uploadDate = uploadDate;
+        this.fileSize = fileSize;
+        this.mimeType = mimeType;
+        this.isVerified = false;
+    }
 
     // Getters and Setters
 
@@ -112,18 +129,5 @@ public class Document {
 
     public void setVerified(boolean isVerified) {
         this.isVerified = isVerified;
-    }
-
-    // Optional: constructor for convenience
-    public Document(User user, String fileName, String fileType, String filePath,
-                    LocalDateTime uploadDate, Long fileSize, String mimeType) {
-        this.user = user;
-        this.fileName = fileName;
-        this.fileType = fileType;
-        this.filePath = filePath;
-        this.uploadDate = uploadDate;
-        this.fileSize = fileSize;
-        this.mimeType = mimeType;
-        this.isVerified = false;
     }
 }

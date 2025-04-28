@@ -18,6 +18,7 @@ import java.util.UUID;
 
 @Service
 public class LoanApplicationService {
+
     @Autowired
     private LoanApplicationRepository loanRepo;
 
@@ -33,6 +34,7 @@ public class LoanApplicationService {
     // Minimum credit score for approval
     private static final int MINIMUM_CREDIT_SCORE = 600;
 
+    // ✅ Submit loan application safely
     @Transactional
     public LoanApplication submitApplicationWithFiles(
             String name,
@@ -40,18 +42,35 @@ public class LoanApplicationService {
             String purpose,
             BigDecimal loanAmount,
             String panCard,
-            Integer tenureInMonths, // <-- Added tenureInMonths parameter
+            Integer tenureInMonths,
             Long userId,
             MultipartFile pfAccountPdf,
             MultipartFile salarySlip
     ) {
         try {
+            // ✅ Validate User
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // Deterministically generate credit score from PAN
+            // ✅ Check if user already has an active loan (approved/disbursed)
+            List<LoanApplication> existingApps = loanRepo.findByUser_Id(userId);
+            for (LoanApplication app : existingApps) {
+                if (app.getStatus() == ApplicationStatus.APPROVED || app.getStatus() == ApplicationStatus.DISBURSED) {
+                    throw new RuntimeException("You already have an active loan. Cannot apply again until it is closed.");
+                }
+            }
+
+            // ✅ Check if PAN card already used in system (simple duplicate check)
+            for (LoanApplication app : existingApps) {
+                if (app.getPanCard().equalsIgnoreCase(panCard)) {
+                    throw new RuntimeException("PAN card already exists in another application.");
+                }
+            }
+
+            // ✅ Generate credit score
             int creditScore = fetchCreditScoreByPan(panCard);
 
+            // ✅ Create new application
             LoanApplication application = new LoanApplication();
             application.setApplicationId(UUID.randomUUID().toString());
             application.setName(name);
@@ -60,26 +79,27 @@ public class LoanApplicationService {
             application.setLoanAmount(loanAmount);
             application.setCreditScore(creditScore);
             application.setPanCard(panCard);
-            application.setTenureInMonths(tenureInMonths); // <-- Set tenure here
+            application.setTenureInMonths(tenureInMonths);
             application.setUser(user);
 
-            // Optionally store PDFs as bytes in LoanApplication (legacy)
+            // ✅ Attach PDFs (stored in DB temporarily)
             application.setPfAccountPdf(pfAccountPdf != null && !pfAccountPdf.isEmpty() ? pfAccountPdf.getBytes() : null);
             application.setSalarySlip(salarySlip != null && !salarySlip.isEmpty() ? salarySlip.getBytes() : null);
 
-            // Credit assessment logic
+            // ✅ Decide Status
             if (creditScore < MINIMUM_CREDIT_SCORE) {
                 application.setStatus(ApplicationStatus.REJECTED);
                 notificationService.notifyLoanStatus(userId, application.getApplicationId(), ApplicationStatus.REJECTED);
             } else {
                 application.setStatus(ApplicationStatus.PENDING);
                 notificationService.createNotification(userId,
-                        "Your loan application has been submitted successfully", "APPLICATION_SUBMITTED");
+                        "Your loan application has been submitted successfully!", "APPLICATION_SUBMITTED");
             }
 
+            // ✅ Save application
             LoanApplication savedApplication = loanRepo.save(application);
 
-            // --- SAVE DOCUMENTS FOR ADMIN ACCESS ---
+            // ✅ Save Documents separately for admin access
             if (pfAccountPdf != null && !pfAccountPdf.isEmpty()) {
                 documentService.saveDocument(pfAccountPdf, userId, "PF_ACCOUNT_PDF");
             }
@@ -88,18 +108,19 @@ public class LoanApplicationService {
             }
 
             return savedApplication;
+
         } catch (Exception e) {
             throw new RuntimeException("Failed to submit loan application: " + e.getMessage(), e);
         }
     }
 
-    // Deterministic, realistic credit score generation based on PAN
+    // ✅ Generate credit score from PAN (realistic simulation)
     private int fetchCreditScoreByPan(String panCard) {
         int hash = Math.abs(panCard.toUpperCase().hashCode());
-        // Credit score between 550 and 850
-        return 550 + (hash % 301);
+        return 550 + (hash % 301); // 550 - 850 range
     }
 
+    // ✅ Get Applications by User
     @Transactional(readOnly = true)
     public List<LoanApplication> getApplicationsByUserId(Long userId) {
         try {
@@ -108,21 +129,21 @@ public class LoanApplicationService {
             }
             return loanRepo.findByUser_Id(userId);
         } catch (Exception e) {
-            System.err.println("Error fetching applications for user " + userId + ": " + e.getMessage());
-            return Collections.emptyList();
+            throw new RuntimeException("Error fetching applications for user: " + e.getMessage());
         }
     }
 
+    // ✅ Get All Applications
     @Transactional(readOnly = true)
     public List<LoanApplication> getAllApplications() {
         try {
             return loanRepo.findAll();
         } catch (Exception e) {
-            System.err.println("Error fetching all applications: " + e.getMessage());
-            return Collections.emptyList();
+            throw new RuntimeException("Error fetching all applications: " + e.getMessage());
         }
     }
 
+    // ✅ Update Loan Status
     @Transactional
     public LoanApplication updateLoanStatus(String applicationId, ApplicationStatus status) {
         try {
@@ -143,11 +164,9 @@ public class LoanApplicationService {
         }
     }
 
-    // --- NEW: Get application by ID (for document download) ---
+    // ✅ Get Application by ID
     @Transactional(readOnly = true)
     public LoanApplication getApplicationById(String applicationId) {
-        // If your applicationId is a String UUID (as in your code), use as is.
-        Optional<LoanApplication> appOpt = loanRepo.findById(applicationId);
-        return appOpt.orElse(null);
+        return loanRepo.findById(applicationId).orElse(null);
     }
 }
