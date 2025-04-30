@@ -32,16 +32,17 @@ public class DisbursementController {
     public ResponseEntity<?> disburseLoan(
             @PathVariable String applicationId,
             @RequestParam BigDecimal amount) {
-        try {
-            Disbursement disbursement = disbursementService.disburseLoan(applicationId, amount);
-            return ResponseEntity.ok(disbursement);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Disbursement failed: " + e.getMessage());
-        }
+        Disbursement disbursement = disbursementService.disburseLoan(applicationId, amount);
+        return ResponseEntity.ok(disbursement);
     }
     
-
-    // Helper DTO for response
+    
+    
+    
+    
+    
+    
+    //  DTO for response
     public static class DisbursementWithEmisResponse {
         private final Disbursement disbursement;
         private final List<Repayment> emis;

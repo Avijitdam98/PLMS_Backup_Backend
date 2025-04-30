@@ -1,18 +1,20 @@
 package com.professionalloan.management.service;
 
-import com.professionalloan.management.model.Notification;
-import com.professionalloan.management.model.User;
-import com.professionalloan.management.model.ApplicationStatus;
-import com.professionalloan.management.repository.NotificationRepository;
-import com.professionalloan.management.repository.UserRepository;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
+import com.professionalloan.management.exception.UserNotFoundException;
+import com.professionalloan.management.model.ApplicationStatus;
+import com.professionalloan.management.model.Notification;
+import com.professionalloan.management.model.User;
+import com.professionalloan.management.repository.NotificationRepository;
+import com.professionalloan.management.repository.UserRepository;
 
 @Service
 public class NotificationService {
@@ -31,7 +33,7 @@ public class NotificationService {
     // Create a new notification
     public Notification createNotification(Long userId, String message, String type) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
 
         Notification notification = new Notification();
         notification.setUser(user);
@@ -51,18 +53,23 @@ public class NotificationService {
     // Mark notification as read
     public Notification markAsRead(Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Notification not found with ID: " + notificationId));
 
         notification.setRead(true);
         return notificationRepository.save(notification);
     }
 
     // Create loan status notification (in-app)
-    public void notifyLoanStatus(Long userId, String applicationId, ApplicationStatus status) {
-        String message = String.format("Your loan application %s has been %s", applicationId, status.name().toLowerCase());
-        createNotification(userId, message, "STATUS_UPDATE");
+    // Create loan status notification (in-app) with optional comment
+public void notifyLoanStatus(Long userId, String applicationId, ApplicationStatus status, String comment) {
+    String message;
+    if (comment != null && !comment.trim().isEmpty()) {
+        message = String.format("Your loan application %s has been %s. %s", applicationId, status.name().toLowerCase(), comment);
+    } else {
+        message = String.format("Your loan application %s has been %s", applicationId, status.name().toLowerCase());
     }
-
+    createNotification(userId, message, "STATUS_UPDATE");
+}
     // Create EMI due notification (in-app)
     public void notifyEMIDue(Long userId, String applicationId, int emiNumber) {
         String message = String.format("EMI #%d for loan %s is due soon", emiNumber, applicationId);

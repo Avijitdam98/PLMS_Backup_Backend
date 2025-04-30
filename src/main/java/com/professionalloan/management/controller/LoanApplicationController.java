@@ -8,8 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -27,60 +27,44 @@ public class LoanApplicationController {
             @RequestParam("purpose") String purpose,
             @RequestParam("loanAmount") BigDecimal loanAmount,
             @RequestParam("panCard") String panCard,
-            @RequestParam("tenureInMonths") Integer tenureInMonths, // <-- ADD THIS LINE
+            @RequestParam("tenureInMonths") Integer tenureInMonths,
             @RequestParam("userId") Long userId,
             @RequestParam("pfAccountPdf") MultipartFile pfAccountPdf,
             @RequestParam("salarySlip") MultipartFile salarySlip
-    ) {
-        try {
-            if (pfAccountPdf.getSize() > 5 * 1024 * 1024 || salarySlip.getSize() > 5 * 1024 * 1024) {
-                return ResponseEntity.badRequest().body("PDF files must be under 5MB");
-            }
-            LoanApplication savedApplication = loanService.submitApplicationWithFiles(
-                    name, profession, purpose, loanAmount, panCard,
-                    tenureInMonths, // <-- PASS IT HERE TOO
-                    userId, pfAccountPdf, salarySlip
-            );
-            return ResponseEntity.ok(savedApplication);
-        } catch (Exception e) {
-            System.err.println("Error submitting application: " + e.getMessage());
-            return ResponseEntity.status(500).body("Failed to submit application: " + e.getMessage());
+    ) throws IOException {
+        if (pfAccountPdf.getSize() > 5 * 1024 * 1024 || salarySlip.getSize() > 5 * 1024 * 1024) {
+            return ResponseEntity.badRequest().body("PDF files must be under 5MB");
         }
+        LoanApplication savedApplication = loanService.submitApplicationWithFiles(
+                name, profession, purpose, loanAmount, panCard,
+                tenureInMonths,
+                userId, pfAccountPdf, salarySlip
+        );
+        return ResponseEntity.ok(savedApplication);
     }
 
+    // - Admin can update status with comment ---
     @PutMapping("/update-status/{applicationId}")
-    public ResponseEntity<?> updateLoanStatus(
+    public ResponseEntity<?> updateLoanStatusWithComment(
             @PathVariable String applicationId,
-            @RequestParam String status) {
-        try {
-            LoanApplication updated = loanService.updateLoanStatus(applicationId, ApplicationStatus.valueOf(status.toUpperCase()));
-            return ResponseEntity.ok(updated);
-        } catch (Exception e) {
-            System.err.println("Error updating status for application " + applicationId + ": " + e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+            @RequestParam String status,
+            @RequestParam(required = false) String comment) {
+        LoanApplication updated = loanService.updateLoanStatusWithComment(
+            applicationId, ApplicationStatus.valueOf(status.toUpperCase()), comment
+        );
+        return ResponseEntity.ok(updated);
     }
 
     @GetMapping("/all")
     public ResponseEntity<List<LoanApplication>> getAllApplications() {
-        try {
-            List<LoanApplication> allApplications = loanService.getAllApplications();
-            return ResponseEntity.ok(allApplications);
-        } catch (Exception e) {
-            System.err.println("Error fetching all applications: " + e.getMessage());
-            return ResponseEntity.ok(Collections.emptyList());
-        }
+        List<LoanApplication> allApplications = loanService.getAllApplications();
+        return ResponseEntity.ok(allApplications);
     }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<LoanApplication>> getUserApplications(@PathVariable Long userId) {
-        try {
-            List<LoanApplication> userApplications = loanService.getApplicationsByUserId(userId);
-            return ResponseEntity.ok(userApplications);
-        } catch (Exception e) {
-            System.err.println("Error fetching applications for user " + userId + ": " + e.getMessage());
-            return ResponseEntity.ok(Collections.emptyList());
-        }
+        List<LoanApplication> userApplications = loanService.getApplicationsByUserId(userId);
+        return ResponseEntity.ok(userApplications);
     }
 
     // --- List all documents for a user ---
@@ -109,7 +93,7 @@ public class LoanApplicationController {
         return ResponseEntity.ok(docs);
     }
 
-    // --- NEW: List all documents for a specific application ---
+    // --- : List all documents for a specific application ---
     @GetMapping("/documents/application/{applicationId}")
     public ResponseEntity<List<DocumentInfo>> getApplicationDocuments(@PathVariable String applicationId) {
         LoanApplication app = loanService.getApplicationById(applicationId);

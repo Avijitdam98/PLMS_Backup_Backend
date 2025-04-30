@@ -1,13 +1,14 @@
 package com.professionalloan.management.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.WebRequest;
-
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -27,6 +28,12 @@ public class GlobalExceptionHandler {
     // ✅ Handle DocumentNotFoundException
     @ExceptionHandler(DocumentNotFoundException.class)
     public ResponseEntity<?> handleDocumentNotFound(DocumentNotFoundException ex, WebRequest request) {
+        return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND, request);
+    }
+
+    // ✅ Handle RepaymentNotFoundException
+    @ExceptionHandler(RepaymentNotFoundException.class)
+    public ResponseEntity<?> handleRepaymentNotFound(RepaymentNotFoundException ex, WebRequest request) {
         return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND, request);
     }
 
@@ -53,10 +60,40 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleLoanAlreadyClosed(LoanAlreadyClosedException ex, WebRequest request) {
         return buildErrorResponse(ex.getMessage(), HttpStatus.CONFLICT, request);
     }
+    
+    // ✅ Handle LoanAlreadyDisbursedException
+    @ExceptionHandler(LoanAlreadyDisbursedException.class)
+    public ResponseEntity<?> handleLoanAlreadyDisbursed(LoanAlreadyDisbursedException ex, WebRequest request) {
+        return buildErrorResponse(ex.getMessage(), HttpStatus.CONFLICT, request);
+    }
+    
+    // ✅ Handle DocumentUploadException
+    @ExceptionHandler(DocumentUploadException.class)
+    public ResponseEntity<?> handleDocumentUploadException(DocumentUploadException ex, WebRequest request) {
+        return buildErrorResponse(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, request);
+    }
+
+    // ✅ Handle PaymentException
+    @ExceptionHandler(PaymentException.class)
+    public ResponseEntity<?> handlePaymentException(PaymentException ex, WebRequest request) {
+        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request);
+    }
+
+    // ✅ Handle AdminRegistrationException
+    @ExceptionHandler(AdminRegistrationException.class)
+    public ResponseEntity<?> handleAdminRegistrationException(AdminRegistrationException ex, WebRequest request) {
+        return buildErrorResponse(ex.getMessage(), HttpStatus.FORBIDDEN, request);
+    }
 
     // ✅ Handle other RuntimeExceptions
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<?> handleRuntimeException(RuntimeException ex, WebRequest request) {
+        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request);
+    }
+
+    // ✅ Handle IllegalArgumentException
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
         return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request);
     }
 

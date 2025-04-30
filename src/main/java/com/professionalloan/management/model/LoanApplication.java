@@ -36,7 +36,6 @@ public class LoanApplication {
     @Column(nullable = false)
     private ApplicationStatus status;
 
-    // --- NEW FIELD: Tenure in Months ---
     @Column(name = "tenure_in_months", nullable = false)
     private Integer tenureInMonths;
 
@@ -56,6 +55,10 @@ public class LoanApplication {
     @JoinColumn(name = "user_id", nullable = false)
     @JsonBackReference
     private User user;
+
+    // --- NEW FIELD FOR ADMIN COMMENTS ---
+    @Column(name = "status_comment")
+    private String statusComment;
 
     // --- Getters and Setters ---
 
@@ -123,7 +126,6 @@ public class LoanApplication {
         this.status = status;
     }
 
-    // --- NEW GETTER AND SETTER FOR TENURE ---
     public Integer getTenureInMonths() {
         return tenureInMonths;
     }
@@ -154,6 +156,14 @@ public class LoanApplication {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public String getStatusComment() {
+        return statusComment;
+    }
+
+    public void setStatusComment(String statusComment) {
+        this.statusComment = statusComment;
     }
 
     @Transient

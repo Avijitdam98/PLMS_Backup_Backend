@@ -1,7 +1,7 @@
 package com.professionalloan.management.exception;
 
 /**
- * Exception thrown when an EMI is already marked as paid.
+ * Exception thrown when attempting to pay an EMI that has already been paid.
  */
 public class EMIAlreadyPaidException extends RuntimeException {
     public EMIAlreadyPaidException(String message) {

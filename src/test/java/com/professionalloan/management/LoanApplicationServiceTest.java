@@ -1,40 +1,36 @@
 package com.professionalloan.management;
+
+import com.professionalloan.management.exception.DuplicateLoanApplicationException;
+import com.professionalloan.management.exception.UserNotFoundException;
+import com.professionalloan.management.model.*;
+import com.professionalloan.management.repository.LoanApplicationRepository;
+import com.professionalloan.management.repository.UserRepository;
+import com.professionalloan.management.service.DocumentService;
 import com.professionalloan.management.service.LoanApplicationService;
 import com.professionalloan.management.service.NotificationService;
-import com.professionalloan.management.service.DocumentService;
-
-import static org.mockito.Mockito.*;
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.math.BigDecimal;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import com.professionalloan.management.model.LoanApplication;
-import com.professionalloan.management.model.ApplicationStatus;
-import com.professionalloan.management.repository.LoanApplicationRepository;
-import com.professionalloan.management.repository.UserRepository;
+import java.math.BigDecimal;
+import java.util.*;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-public class LoanApplicationServiceTest {
+class LoanApplicationServiceTest {
 
     @InjectMocks
-    private LoanApplicationService loanApplicationService;
+    private LoanApplicationService service;
 
     @Mock
-    private LoanApplicationRepository loanApplicationRepository;
-
+    private LoanApplicationRepository loanRepo;
     @Mock
     private UserRepository userRepository;
-
     @Mock
     private NotificationService notificationService;
-
     @Mock
     private DocumentService documentService;
 
@@ -44,26 +40,39 @@ public class LoanApplicationServiceTest {
     }
 
     @Test
-    void testGetApplicationById() {
-        LoanApplication loanApplication = new LoanApplication();
-        loanApplication.setApplicationId("APP123");
-        when(loanApplicationRepository.findById("APP123")).thenReturn(Optional.of(loanApplication));
-
-        LoanApplication found = loanApplicationService.getApplicationById("APP123");
-        assertNotNull(found);
-        assertEquals("APP123", found.getApplicationId());
+    void submitApplicationWithFiles_userNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(UserNotFoundException.class, () -> service.submitApplicationWithFiles(
+                "name", "profession", "purpose", BigDecimal.TEN, "PAN", 12, 1L, null, null
+        ));
     }
 
     @Test
-    void testUpdateLoanStatus() {
-        LoanApplication loanApplication = new LoanApplication();
-        loanApplication.setApplicationId("APP456");
-        loanApplication.setStatus(ApplicationStatus.PENDING);
+    void submitApplicationWithFiles_duplicateLoan() {
+        User user = new User();
+        LoanApplication app = new LoanApplication();
+        app.setStatus(ApplicationStatus.APPROVED);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(loanRepo.findByUser_Id(1L)).thenReturn(List.of(app));
+        assertThrows(DuplicateLoanApplicationException.class, () -> service.submitApplicationWithFiles(
+                "name", "profession", "purpose", BigDecimal.TEN, "PAN", 12, 1L, null, null
+        ));
+    }
 
-        when(loanApplicationRepository.findById("APP456")).thenReturn(Optional.of(loanApplication));
-        when(loanApplicationRepository.save(any(LoanApplication.class))).thenReturn(loanApplication);
+    @Test
+    void getApplicationsByUserId_returnsEmptyIfNull() {
+        assertTrue(service.getApplicationsByUserId(null).isEmpty());
+    }
 
-        LoanApplication updated = loanApplicationService.updateLoanStatus("APP456", ApplicationStatus.APPROVED);
-        assertEquals(ApplicationStatus.APPROVED, updated.getStatus());
+    @Test
+    void updateLoanStatusWithComment_updatesStatusAndComment() {
+        LoanApplication app = new LoanApplication();
+        app.setUser(new User());
+        when(loanRepo.findById("id")).thenReturn(Optional.of(app));
+        when(loanRepo.save(app)).thenReturn(app);
+
+        LoanApplication result = service.updateLoanStatusWithComment("id", ApplicationStatus.APPROVED, "ok");
+        assertEquals(ApplicationStatus.APPROVED, result.getStatus());
+        assertEquals("ok", result.getStatusComment());
     }
 }

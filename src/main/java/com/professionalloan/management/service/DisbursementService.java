@@ -55,7 +55,7 @@ public class DisbursementService {
 
         disbursementRepo.save(disbursement);
 
-        // ✅ Simulate Bank Transfer (sleep 1 sec)
+        //  Simulate Bank Transfer (sleep 1 sec)
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
@@ -63,17 +63,17 @@ public class DisbursementService {
             throw new RuntimeException("Disbursement process interrupted.");
         }
 
-        // ✅ Update disbursement + loan status
+        // Update disbursement + loan status
         disbursement.setStatus(DisbursementStatus.COMPLETED);
         disbursementRepo.save(disbursement);
 
         application.setStatus(ApplicationStatus.DISBURSED);
         loanRepo.save(application);
 
-        // ✅ Generate EMI schedule immediately
+        // Generate EMI schedule immediately
         repaymentService.generateEMISchedule(applicationId, application.getTenureInMonths());
 
-        // ✅ Notify user after disbursement
+        // Notify user after disbursement
         User user = application.getUser();
         notificationService.notifyDisbursement(user.getId(), applicationId);
         notificationService.sendDisbursementEmail(user, applicationId, amount);
@@ -81,3 +81,4 @@ public class DisbursementService {
         return disbursement;
     }
 }
+
