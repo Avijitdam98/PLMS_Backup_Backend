@@ -30,23 +30,23 @@ public class DisbursementService {
     @Autowired
     private RepaymentService repaymentService;
 
-    // ✅ Full atomic disbursement method
+    //  Full atomic disbursement method
     @Transactional
     public Disbursement disburseLoan(String applicationId, BigDecimal amount) {
         LoanApplication application = loanRepo.findById(applicationId)
             .orElseThrow(() -> new RuntimeException("Loan application not found"));
 
-        // ✅ Validate loan status before disbursement
+        // Validate loan status before disbursement
         if (application.getStatus() != ApplicationStatus.APPROVED) {
             throw new RuntimeException("Loan application must be APPROVED before disbursement.");
         }
 
-        // ✅ Strict amount validation (optional)
+        //  Strict amount validation (optional)
         if (amount.compareTo(application.getLoanAmount()) != 0) {
             throw new RuntimeException("Disbursement amount must match approved loan amount.");
         }
 
-        // ✅ Create new disbursement record
+        // Create new disbursement record
         Disbursement disbursement = new Disbursement();
         disbursement.setLoanApplication(application);
         disbursement.setDisbursedAmount(amount);
@@ -73,6 +73,7 @@ public class DisbursementService {
         // Generate EMI schedule immediately
         repaymentService.generateEMISchedule(applicationId, application.getTenureInMonths());
 
+        
         // Notify user after disbursement
         User user = application.getUser();
         notificationService.notifyDisbursement(user.getId(), applicationId);

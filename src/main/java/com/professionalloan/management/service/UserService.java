@@ -15,38 +15,53 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    // Registration method (throws Duplicate exception if email exists)
+    @Autowired
+    private EmailService emailService;
+
+    //  Register user (fails if email is already registered)
     public boolean registerUser(User user) {
         Optional<User> existingUser = userRepository.findByEmail(user.getEmail());
         if (existingUser.isPresent()) {
             throw new DuplicateLoanApplicationException("Email already registered!");
         }
+
+        // Assign role if not set
+        if (user.getRole() == null) {
+            user.setRole("USER");
+        }
+
         userRepository.save(user);
+
+        // Send registration success email
+        emailService.sendRegistrationSuccessEmail(user.getEmail(), user.getName());
+
         return true;
     }
 
-    // Strict admin-only login logic
+    //  Admin-only login with hardcoded credentials
     public User findByEmailAndPassword(String email, String password) {
-        // Admin login (hardcoded)
+        // Admin login
         if ("admin@gmail.com".equals(email) && "admin".equals(password)) {
             User admin = new User();
-            admin.setId(0L); // Set a fixed ID for admin
+            admin.setId(0L); 
             admin.setEmail("admin@gmail.com");
             admin.setPassword("admin");
             admin.setName("Admin");
             admin.setRole("ADMIN");
             return admin;
         }
-        // Prevent any normal user from logging in with admin email
+
+        // Prevent login for anyone else using admin email
         if ("admin@gmail.com".equals(email)) {
             throw new UserNotFoundException("Invalid admin credentials!");
         }
-        // Normal user login (from DB)
+
+        //  Normal user login from DB
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             if (user.getPassword().equals(password)) {
-                // Only set role if not already set
+                // Default role assignment
                 if (user.getRole() == null) {
                     user.setRole("USER");
                 }
@@ -55,21 +70,22 @@ public class UserService {
                 throw new UserNotFoundException("Invalid password!");
             }
         }
+
         throw new UserNotFoundException("User not found with email: " + email);
     }
 
-    // For OTP flow: throws exception if user not found
+    //  Used for OTP verification and forgot password
     public User findByEmail(String email) {
-        Optional<User> userOpt = userRepository.findByEmail(email);
-        return userOpt.orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
     }
 
-    // Find user by ID (needed for profile update)
+    //  Used for profile update
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
     }
 
-    // Save user (no exception handling needed here)
+    //  Save updated user details
     public void save(User user) {
         userRepository.save(user);
     }

@@ -34,6 +34,9 @@ public class LoanApplicationService {
     @Autowired
     private DocumentService documentService;
 
+    @Autowired
+    private EmailService emailService;
+
     private static final int MINIMUM_CREDIT_SCORE = 600;
 
     @Transactional
@@ -82,10 +85,31 @@ public class LoanApplicationService {
         if (creditScore < MINIMUM_CREDIT_SCORE) {
             application.setStatus(ApplicationStatus.REJECTED);
             notificationService.notifyLoanStatus(userId, application.getApplicationId(), ApplicationStatus.REJECTED, null);
+
+            //  SEND EMAIL FOR REJECTION
+            emailService.sendLoanStatusEmail(
+                    user.getEmail(),
+                    user.getName(),
+                    "REJECTED",
+                    application.getApplicationId(),
+                    creditScore,
+                    "Reason: Credit score is below the required threshold (" + MINIMUM_CREDIT_SCORE + ")."
+            );
+
         } else {
             application.setStatus(ApplicationStatus.PENDING);
             notificationService.createNotification(userId,
                     "Your loan application has been submitted successfully!", "APPLICATION_SUBMITTED");
+
+            // ✅ SEND EMAIL FOR SUBMISSION
+            emailService.sendLoanStatusEmail(
+                    user.getEmail(),
+                    user.getName(),
+                    "PENDING",
+                    application.getApplicationId(),
+                    creditScore,
+                    "Your application has been received and is under review."
+            );
         }
 
         LoanApplication savedApplication = loanRepo.save(application);
@@ -118,7 +142,6 @@ public class LoanApplicationService {
         return loanRepo.findAll();
     }
 
-    // --- UPDATED: Update Loan Status with Comment ---
     @Transactional
     public LoanApplication updateLoanStatusWithComment(String applicationId, ApplicationStatus status, String comment) {
         LoanApplication application = loanRepo.findById(applicationId)

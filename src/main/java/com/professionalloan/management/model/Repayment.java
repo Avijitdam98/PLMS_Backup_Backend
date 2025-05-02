@@ -1,5 +1,3 @@
-
-
 package com.professionalloan.management.model;
 
 import jakarta.persistence.*;
@@ -31,9 +29,18 @@ public class Repayment {
     private String status; // PENDING, PAID, OVERDUE
 
     @Column
-    private Integer emiNumber; // 1st, 2nd, etc.
+    private Integer emiNumber; // 1, 2, ...
 
-    // --- Getters and Setters ---
+    @Column(name = "payment_method")
+    private String paymentMethod;
+
+    @Column(name = "transaction_id")
+    private String transactionId;
+
+    @Column(name = "failure_reason")
+    private String failureReason;
+
+    // ----------------- Getters and Setters -----------------
 
     public Long getId() {
         return id;
@@ -90,7 +97,28 @@ public class Repayment {
     public void setEmiNumber(Integer emiNumber) {
         this.emiNumber = emiNumber;
     }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    public String getFailureReason() {
+        return failureReason;
+    }
+
+    public void setFailureReason(String failureReason) {
+        this.failureReason = failureReason;
+    }
 }
-
-
-
