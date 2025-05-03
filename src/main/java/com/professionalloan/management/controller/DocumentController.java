@@ -72,18 +72,23 @@ public class DocumentController {
         documentService.deleteDocument(documentId);
         return ResponseEntity.ok().build();
     }
+    
+    
+    
+    
+    
 
-    @GetMapping("/type/{userId}/{documentType}")
-    public ResponseEntity<List<Document>> getUserDocumentsByType(
-            @PathVariable Long userId,
-            @PathVariable String documentType) {
-        List<Document> documents = documentService.getUserDocumentsByType(userId, documentType);
-        return ResponseEntity.ok(documents);
-    }
+//    @GetMapping("/type/{userId}/{documentType}")
+//    public ResponseEntity<List<Document>> getUserDocumentsByType(
+//            @PathVariable Long userId,
+//            @PathVariable String documentType) {
+//        List<Document> documents = documentService.getUserDocumentsByType(userId, documentType);
+//        return ResponseEntity.ok(documents);
+//    }
 
-    @PutMapping("/verify/{documentId}")
-    public ResponseEntity<?> verifyDocument(@PathVariable Long documentId) {
-        documentService.verifyDocument(documentId);
-        return ResponseEntity.ok().build();
-    }
+//    @PutMapping("/verify/{documentId}")
+//    public ResponseEntity<?> verifyDocument(@PathVariable Long documentId) {
+//        documentService.verifyDocument(documentId);
+//        return ResponseEntity.ok().build();
+//    }
 }

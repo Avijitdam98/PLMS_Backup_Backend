@@ -132,11 +132,25 @@ public class RepaymentService {
     private void sendPaymentEmail(Repayment repayment) {
         LoanApplication loan = repayment.getLoanApplication();
         User user = loan.getUser();
-        String subject = "EMI Payment Confirmation";
+
+        String subject = "✅ EMI Payment Successful - Confirmation for Loan ID " + loan.getApplicationId();
+
         String message = String.format(
-            "Dear %s,\n\nYour EMI payment of ₹%s for Loan ID %s has been successfully processed on %s.\n\nThank you.\n\n- PLMS Team",
-            user.getName(), repayment.getEmiAmount(), loan.getApplicationId(), repayment.getPaidDate()
+            "Hello %s,\n\n" +
+            "We are pleased to inform you that your EMI payment has been successfully received.\n\n" +
+            "📌 Payment Details:\n" +
+            "   • Amount Paid: ₹%s\n" +
+            "   • Loan ID: %s\n" +
+            "   • Payment Date: %s\n\n" +
+            "Thank you for your prompt payment. If you have any questions, feel free to contact our support team.\n\n" +
+            "Best regards,\n" +
+            "Professional Loan Management System (PLMS) Team",
+            user.getName(),
+            repayment.getEmiAmount(),
+            loan.getApplicationId(),
+            repayment.getPaidDate()
         );
+
         emailService.sendSimpleMessage(user.getEmail(), subject, message);
     }
 

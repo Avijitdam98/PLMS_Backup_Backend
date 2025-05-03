@@ -101,7 +101,7 @@ public class LoanApplicationService {
             notificationService.createNotification(userId,
                     "Your loan application has been submitted successfully!", "APPLICATION_SUBMITTED");
 
-            // ✅ SEND EMAIL FOR SUBMISSION
+            //  SEND EMAIL FOR SUBMISSION
             emailService.sendLoanStatusEmail(
                     user.getEmail(),
                     user.getName(),
